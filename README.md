@@ -1,1 +1,1 @@
-6(3) Group Project for CS492 
+6(3) Person group Project for CS492 
