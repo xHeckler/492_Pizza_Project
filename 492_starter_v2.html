@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>492 Group 2 Pizza — Order Online</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f8fafc; color: #111; }
+    header { background: #ef4444; color: white; padding: 1rem; text-align: center; }
+    h1 { margin: 0; }
+    main { display: flex; gap: 2rem; padding: 1rem; max-width: 1100px; margin: auto; }
+    .menu, .cart { flex: 1; background: white; border-radius: 8px; padding: 1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .menu-item { display: flex; justify-content: space-between; align-items: center; padding: .5rem 0; border-bottom: 1px solid #ddd; }
+    .menu-item:last-child { border-bottom: none; }
+    button { background: #3b82f6; color: white; border: none; padding: .4rem .8rem; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-ghost { background: #e5e7eb; color: #111; }
+    .btn-danger { background: #ef4444; color: white; }
+    .cart-list { margin-top: 1rem; display: grid; gap: .25rem; }
+    .cart-item { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: .75rem; padding: .5rem 0; border-bottom: 1px solid #eee; }
+    .controls { display: inline-flex; align-items: center; gap: .4rem; }
+    .qty-pill { display:inline-flex; align-items:center; justify-content:center; min-width: 2.2rem; padding: .2rem .5rem; border-radius: 999px; background:#f3f4f6; }
+    footer { text-align: center; padding: 1rem; font-size: .9rem; color: #555; }
+  .status-open{color:#16a34a;font-weight:600}.status-closed{color:#dc2626;font-weight:600}.hours-box{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:.75rem;margin:.5rem 0}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🍕 492 Group 2 Pizza</h1>
+    <p>Hand-Tossed. Fast. Local.</p>
+  </header>
+
+  <main>
+    <section class="menu">
+      <h2>Menu</h2>
+      <div id="menu"></div>
+    </section>
+
+    <section class="cart">
+      <h2>Cart</h2>
+      <div class="hours-box">
+        <div id="open-line">Checking hours…</div>
+        <small id="hours-lines">Mon–Sat 11:00 AM – 9:00 PM · Sun Closed</small>
+      </div>
+      <div id="cart-empty">Your cart is empty.</div>
+      <div class="cart-list" id="cart-list"></div>
+      <hr>
+      <p>Subtotal: <span id="subtotal">$0.00</span></p>
+      <p>Tax: <span id="tax">$0.00</span></p>
+      <p><strong>Total: <span id="total">$0.00</span></strong></p>
+      <button id="checkout" disabled>Place Order</button>
+    </section>
+  </main>
+
+  <footer>
+    <p>Class project demo • No payments processed • Built with vanilla HTML/CSS/JS</p>
+  </footer>
+
+  <script>
+    const TAX_RATE = 0.0825; // change if your city uses a different tax
+    // Hours: Monday–Saturday 11:00–21:00 (9pm). Sunday closed.
+    const HOURS = {
+      0: null,                // Sun: closed
+      1: {open:11, close:21}, // Mon
+      2: {open:11, close:21}, // Tue
+      3: {open:11, close:21}, // Wed
+      4: {open:11, close:21}, // Thu
+      5: {open:11, close:21}, // Fri
+      6: {open:11, close:21}, // Sat
+    };
+    const MENU = [
+      { id: 'pep', name: 'Pepperoni', price: 12.99 },
+      { id: 'mar', name: 'Margherita', price: 11.49 },
+      { id: 'bbq', name: 'BBQ Chicken', price: 13.79 },
+      { id: 'veg', name: 'Garden Veggie', price: 12.49 },
+      { id: 'meat', name: 'Meat Lovers', price: 14.29 },
+      { id: 'chs', name: 'Cheese', price: 10.99 },
+    ];
+
+    const cart = {}; // {id: {id, name, price, qty}}
+
+    function renderMenu() {
+      const menuDiv = document.getElementById('menu');
+      menuDiv.innerHTML = '';
+      MENU.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'menu-item';
+        div.innerHTML = `<span>${item.name} — $${item.price.toFixed(2)}</span>`;
+        const btn = document.createElement('button');
+        btn.textContent = 'Add';
+        btn.onclick = () => addToCart(item);
+        div.appendChild(btn);
+        menuDiv.appendChild(div);
+      });
+    }
+
+    function addToCart(item) {
+      if (!cart[item.id]) cart[item.id] = { ...item, qty: 0 };
+      cart[item.id].qty++;
+      renderCart();
+    }
+
+    function changeQty(id, delta) {
+      if (!cart[id]) return;
+      cart[id].qty += delta;
+      if (cart[id].qty <= 0) delete cart[id];
+      renderCart();
+    }
+
+    function removeFromCart(id) {
+      if (cart[id]) { delete cart[id]; renderCart(); }
+    }
+
+    function renderCart() {
+      const list = document.getElementById('cart-list');
+      const emptyMsg = document.getElementById('cart-empty');
+      list.innerHTML = '';
+      let subtotal = 0;
+
+      const items = Object.values(cart);
+      if (items.length === 0) {
+        emptyMsg.style.display = 'block';
+        document.getElementById('checkout').disabled = true;
+      } else {
+        emptyMsg.style.display = 'none';
+        document.getElementById('checkout').disabled = false;
+        items.forEach(it => {
+          subtotal += it.price * it.qty;
+          const row = document.createElement('div');
+          row.className = 'cart-item';
+
+          const left = document.createElement('div');
+          left.innerHTML = `<strong>${it.name}</strong><br><small>$${it.price.toFixed(2)} each</small>`;
+
+          const right = document.createElement('div');
+          right.className = 'controls';
+
+          const minus = document.createElement('button');
+          minus.textContent = '−';
+          minus.className = 'btn-ghost';
+          minus.onclick = () => changeQty(it.id, -1);
+          minus.title = 'Decrease quantity';
+          minus.disabled = it.qty <= 1; // prevent going below 1 via minus; use Remove for zero
+
+          const qty = document.createElement('span');
+          qty.className = 'qty-pill';
+          qty.textContent = it.qty;
+          qty.title = 'Quantity';
+
+          const plus = document.createElement('button');
+          plus.textContent = '+';
+          plus.className = 'btn-ghost';
+          plus.onclick = () => changeQty(it.id, +1);
+          plus.title = 'Increase quantity';
+
+          const line = document.createElement('span');
+          line.style.minWidth = '4.5rem';
+          line.style.textAlign = 'right';
+          line.textContent = `$${(it.price * it.qty).toFixed(2)}`;
+
+          const removeBtn = document.createElement('button');
+          removeBtn.textContent = 'Remove';
+          removeBtn.className = 'btn-danger';
+          removeBtn.onclick = () => removeFromCart(it.id);
+
+          right.append(minus, qty, plus, line, removeBtn);
+          row.append(left, right);
+          list.appendChild(row);
+        });
+      }
+
+      const tax = subtotal * TAX_RATE;
+      const total = subtotal + tax;
+      document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+      document.getElementById('tax').textContent = `$${tax.toFixed(2)}`;
+      document.getElementById('total').textContent = `$${total.toFixed(2)}`;
+    }
+
+    document.getElementById('checkout').onclick = () => {
+      alert('Thank you for your order! This is a class demo, no real pizza will be delivered.');
+      for (let key in cart) delete cart[key];
+      renderCart();
+    };
+
+    renderMenu();
+    renderCart();
+    updateHours();
+    setInterval(updateHours, 60000);
+  function updateHours(){
+      const now = new Date();
+      const d = now.getDay();
+      const h = now.getHours() + now.getMinutes()/60;
+      const today = HOURS[d];
+      const lineEl = document.getElementById('open-line');
+      if(!today){
+        lineEl.textContent = 'Closed today (Sunday)';
+        lineEl.className = 'status-closed';
+        return;
+      }
+      const open = h >= today.open && h < today.close;
+      const fmt = hr => `${((hr+11)%12)+1}:00 ${hr>=12?'PM':'AM'}`;
+      lineEl.textContent = open ? `Open now · Closes at ${fmt(today.close)}` : `Closed · Opens at ${fmt(today.open)}`;
+      lineEl.className = open ? 'status-open' : 'status-closed';
+    }
+  </script>
+</body>
+</html>
