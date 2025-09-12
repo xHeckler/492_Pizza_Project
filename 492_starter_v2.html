@@ -62,7 +62,7 @@
   </footer>
 
   <script>
-    const TAX_RATE = 0.0825; // change if your city uses a different tax
+    const TAX_RATE = 0.0825; 
     // Hours: Monday–Saturday 11:00–21:00 (9pm). Sunday closed.
     const HOURS = {
       0: null,                // Sun: closed
@@ -145,7 +145,7 @@
           minus.className = 'btn-ghost';
           minus.onclick = () => changeQty(it.id, -1);
           minus.title = 'Decrease quantity';
-          minus.disabled = it.qty <= 1; // prevent going below 1 via minus; use Remove for zero
+          minus.disabled = it.qty <= 1; // prevent going below 1 
 
           const qty = document.createElement('span');
           qty.className = 'qty-pill';
