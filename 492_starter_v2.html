@@ -216,10 +216,124 @@
     }
 
     document.getElementById('checkout').onclick = () => {
-      alert('Thank you for your order! This is a class demo, no real pizza will be delivered.');
+      alert('Thank you for your order! CLASS DEMO ONLY.');
       for (let key in cart) delete cart[key];
       renderCart();
     };
+
+        // Admin & Pricing (client-side demo) 
+    const ADMIN_PIN = '4922'; // demo
+    let adminAuthed = false;
+
+    // Load local storage 
+    function applySavedPrices() {
+      try {
+        const saved = JSON.parse(localStorage.getItem('menu_prices') || '{}');
+        MENU.forEach(item => {
+          if (saved[item.id] != null && !isNaN(saved[item.id])) {
+            item.price = parseFloat(saved[item.id]);
+          }
+        });
+      } catch(e) { /* ignore parse errors */ }
+    }
+
+    function showAdmin() {
+      const adminEl = document.getElementById('admin');
+      adminEl.style.display = 'block';
+      document.body.classList.add('admin-open');
+      renderAdminRows();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function hideAdmin() {
+      const adminEl = document.getElementById('admin');
+      adminEl.style.display = 'none';
+      document.body.classList.remove('admin-open');
+    }
+
+    function renderAdminRows() {
+      const tbody = document.getElementById('adminRows');
+      tbody.innerHTML = '';
+      MENU.forEach(item => {
+        const tr = document.createElement('tr');
+        const tdName = document.createElement('td');
+        tdName.style.padding = '.5rem';
+        tdName.textContent = item.name;
+        const tdPrice = document.createElement('td');
+        tdPrice.style.padding = '.5rem';
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.min = '0';
+        input.step = '0.01';
+        input.value = item.price.toFixed(2);
+        input.style.padding = '.4rem .5rem';
+        input.style.border = '1px solid #ddd';
+        input.style.borderRadius = '6px';
+        input.style.maxWidth = '8rem';
+        input.dataset.id = item.id;
+        tdPrice.appendChild(input);
+        tr.append(tdName, tdPrice);
+        tbody.appendChild(tr);
+      });
+    }
+
+    function savePrices() {
+      const inputs = document.querySelectorAll('#adminRows input[type="number"]');
+      const saved = {};
+      inputs.forEach(inp => {
+        const id = inp.dataset.id;
+        const val = parseFloat(inp.value);
+        if (!isNaN(val)) {
+          saved[id] = parseFloat(val.toFixed(2));
+        }
+      });
+      localStorage.setItem('menu_prices', JSON.stringify(saved));
+      applySavedPrices();
+      renderMenu();
+      renderCart();
+      alert('Prices saved.');
+    }
+
+    function resetPrices() {
+      localStorage.removeItem('menu_prices');
+      const defaults = {
+        'pep': 12.99, 'mar': 11.49, 'bbq': 13.79, 'veg': 12.49, 'meat': 14.29, 'chs': 10.99
+      };
+      MENU.forEach(x => { if (defaults[x.id] != null) x.price = defaults[x.id]; });
+      renderAdminRows();
+      renderMenu();
+      renderCart();
+      alert('Prices reset to defaults.');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('adminBtn');
+      if (btn) {
+        btn.addEventListener('click', () => {
+          if (!adminAuthed) {
+            const pin = prompt('Enter admin PIN (demo):');
+            if (pin === ADMIN_PIN) {
+              adminAuthed = true;
+              showAdmin();
+            } else if (pin !== null) {
+              alert('Incorrect PIN.');
+            }
+          } else {
+            showAdmin();
+          }
+        });
+      }
+
+      const saveBtn = document.getElementById('savePrices');
+      const resetBtn = document.getElementById('resetPrices');
+      const closeBtn = document.getElementById('closeAdmin');
+      if (saveBtn) saveBtn.addEventListener('click', savePrices);
+      if (resetBtn) resetBtn.addEventListener('click', resetPrices);
+      if (closeBtn) closeBtn.addEventListener('click', hideAdmin);
+    });
+
+    // Apply BEFORE first render
+    applySavedPrices();
 
     renderMenu();
     renderCart();
