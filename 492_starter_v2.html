@@ -35,7 +35,11 @@
   <header>
     <h1>🍕 492 Group 2 Pizza</h1>
     <p>Hand-Tossed. Fast. Local.</p>
-  </header>
+    <div style="position:absolute; right:12px; top:12px;">
+    <button id="adminBtn" title="Admin pricing">Admin</button>
+  </div>
+</header>
+
 
   <main>
     <section class="menu">
@@ -59,7 +63,33 @@
     </section>
   </main>
 
+    <!-- Admin Panel -->
+  <section class="admin" id="admin" style="display:none; max-width:1100px; margin: 0 auto 1rem;">
+    <div class="admin-card" style="background:white; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); padding:1rem;">
+      <h2 style="margin-top:0;">Admin — Edit Pizza Prices</h2>
+      <p style="margin:.25rem 0 1rem;color:#555">No backend demo - Changes are saved in browser.</p>
+      <div class="table-wrap" style="overflow:auto">
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr>
+              <th style="text-align:left; padding:.5rem; border-bottom:1px solid #eee;">Pizza</th>
+              <th style="text-align:left; padding:.5rem; border-bottom:1px solid #eee;">Price (USD)</th>
+            </tr>
+          </thead>
+          <tbody id="adminRows"></tbody>
+        </table>
+      </div>
+      <div style="display:flex; gap:.5rem; margin-top:1rem; flex-wrap:wrap">
+        <button id="savePrices">Save Prices</button>
+        <button id="resetPrices" class="btn-ghost">Reset to Defaults</button>
+        <button id="closeAdmin" class="btn-ghost">Close</button>
+      </div>
+      <small style="display:block; margin-top:.75rem; color:#666">Tax and totals update automatically.</small>
+    </div>
+  </section>
+
   <footer>
+
     <p>Class project demo • No payments processed • Built with HTML/CSS/JS</p>
   </footer>
 
