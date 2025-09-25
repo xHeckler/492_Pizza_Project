@@ -61,7 +61,7 @@
       <div class="cart-list" id="cart-list"></div>
       <hr>
       <p>Subtotal: <span id="subtotal">$0.00</span></p>
-      <p>Discounts (BOGO): <span id="discount">-$0.00</span></p> <!-- NEW-->
+      <p>Discounts (BOGO): <span id="discount">-$0.00</span></p>
       <p>Tax: <span id="tax">$0.00</span></p>
       <p><strong>Total: <span id="total">$0.00</span></strong></p>
       <button id="checkout" disabled>Place Order</button>
@@ -126,7 +126,13 @@
 
     const cart = {}; // {id: {id, name, price, qty}}
 
-    // Render
+    // --- Helpers ---
+    function bogoPayableQty(id, qty) {
+      if (!BOGO[id]) return qty;                // if not eligible: pay all
+      return qty - Math.floor(qty / 2);         // every second is free
+    }
+
+    // -------- Renderers --------
     function renderMenu() {
       const menuDiv = document.getElementById('menu');
       menuDiv.innerHTML = '';
@@ -165,7 +171,9 @@
       const list = document.getElementById('cart-list');
       const emptyMsg = document.getElementById('cart-empty');
       list.innerHTML = '';
-      let subtotal = 0;
+
+      let gross = 0;           // sum before any discounts
+      let discountTotal = 0;   // total BOGO savings across lines
 
       const items = Object.values(cart);
       if (items.length === 0) {
@@ -174,13 +182,22 @@
       } else {
         emptyMsg.style.display = 'none';
         document.getElementById('checkout').disabled = false;
+
         items.forEach(it => {
-          subtotal += it.price * it.qty;
+          // Pricing math (BOGO)
+          gross += it.price * it.qty;
+          const payable = bogoPayableQty(it.id, it.qty);
+          const lineTotal = it.price * payable;
+          const lineDiscount = it.price * (it.qty - payable);
+          discountTotal += lineDiscount;
+
+          // Row UI
           const row = document.createElement('div');
           row.className = 'cart-item';
 
           const left = document.createElement('div');
-          left.innerHTML = `<strong>${it.name}</strong><br><small>$${it.price.toFixed(2)} each</small>`;
+          const badge = (lineDiscount > 0) ? ` <small style="color:#16a34a;">BOGO applied</small>` : '';
+          left.innerHTML = `<strong>${it.name}</strong>${badge}<br><small>$${it.price.toFixed(2)} each</small>`;
 
           const right = document.createElement('div');
           right.className = 'controls';
@@ -206,7 +223,8 @@
           const line = document.createElement('span');
           line.style.minWidth = '4.5rem';
           line.style.textAlign = 'right';
-          line.textContent = `$${(it.price * it.qty).toFixed(2)}`;
+          line.textContent = `$${lineTotal.toFixed(2)}`;
+          if (lineDiscount > 0) line.title = `BOGO: saved $${lineDiscount.toFixed(2)}`;
 
           const removeBtn = document.createElement('button');
           removeBtn.textContent = 'Remove';
@@ -219,9 +237,12 @@
         });
       }
 
-      const tax = subtotal * TAX_RATE;
-      const total = subtotal + tax;
-      document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+      const netSubtotal = gross - discountTotal;
+      const tax = netSubtotal * TAX_RATE;
+      const total = netSubtotal + tax;
+
+      document.getElementById('subtotal').textContent = `$${gross.toFixed(2)}`;
+      document.getElementById('discount').textContent = `-$${discountTotal.toFixed(2)}`;
       document.getElementById('tax').textContent = `$${tax.toFixed(2)}`;
       document.getElementById('total').textContent = `$${total.toFixed(2)}`;
     }
