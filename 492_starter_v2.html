@@ -120,19 +120,19 @@
       { id: 'chs', name: 'Cheese',      price: 10.99 },
     ];
 
-    // BOGO flags per item id (persisted in localStorage)
+    // BOGO flags per item id 
     const DEFAULT_BOGO = MENU.reduce((acc, it) => (acc[it.id] = false, acc), {});
     let BOGO = { ...DEFAULT_BOGO };
 
     const cart = {}; // {id: {id, name, price, qty}}
 
-    // --- Helpers ---
+    // Helper
     function bogoPayableQty(id, qty) {
       if (!BOGO[id]) return qty;                // if not eligible: pay all
       return qty - Math.floor(qty / 2);         // every second is free
     }
 
-    // -------- Renderers --------
+    // Renderers 
     function renderMenu() {
       const menuDiv = document.getElementById('menu');
       menuDiv.innerHTML = '';
@@ -253,7 +253,7 @@
       renderCart();
     };
 
-    // -------- Admin (client-side demo) --------
+    // Admin (client-side demo) 
     const ADMIN_PIN = '4922'; // Employee PIN
     let adminAuthed = false;
 
