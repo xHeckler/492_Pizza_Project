@@ -57,7 +57,39 @@
     .admin-open header { filter: none; }
     button:hover { opacity: .95; }
     th, td { vertical-align: middle; }
+
+    /* PayPal Modal Styles (added) */
+    #paypalModal {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    #paypalModalCard {
+      background: #fff; border-radius: 12px; padding: 1.25rem;
+      width: 100%; max-width: 420px; box-shadow: 0 4px 14px rgba(0,0,0,.15);
+    }
+    #paypalModalHeader {
+      display:flex; align-items:center; justify-content:space-between; margin-bottom:.75rem;
+    }
+    #paypalCloseBtn {
+      background:#e5e7eb; color:#111; border:none; border-radius:8px; padding:.35rem .6rem; cursor:pointer;
+    }
+    #paypalCancelBtn {
+      margin-top: .75rem;
+      background: #ef4444; color: white; border: none; padding: .5rem .9rem; border-radius: 8px; cursor: pointer; width: 100%;
+    }
+    .muted { color:#6b7280; font-size:.9rem; }
   </style>
+
+  <!-- PayPal JS SDK-->
+  <script
+    src="https://www.paypal.com/sdk/js?client-id=test&buyer-country=US&currency=USD&components=buttons&enable-funding=venmo,paylater,card"
+    data-sdk-integration-source="developer-studio"
+  ></script>
 </head>
 <body>
   <header>
@@ -118,11 +150,24 @@
     </div>
   </section>
 
+  <!-- PayPal Checkout Modal (added) -->
+  <div id="paypalModal" role="dialog" aria-modal="true" aria-labelledby="paypalTitle">
+    <div id="paypalModalCard">
+      <div id="paypalModalHeader">
+        <h3 id="paypalTitle" style="margin:0;">Complete Your Payment</h3>
+        <button id="paypalCloseBtn" title="Close">✕</button>
+      </div>
+      <p class="muted">Secure checkout is provided by PayPal. This class demo does not process real payments.</p>
+      <div id="paypal-button-container"></div>
+      <button id="paypalCancelBtn">Cancel</button>
+    </div>
+  </div>
+
   <footer>
     <p>Class project demo • No payments processed • Built with HTML/CSS/JS</p>
-	<a href='https://maps.app.goo.gl/CA97AANGebN1aCHX9'  target="_blank">1575 Garden of the Gods Rd, Suite 100</a>
-	<p></p>
-	<a href='https://maps.app.goo.gl/CA97AANGebN1aCHX9'  target="_blank">Colorado Springs, CO 80907</a>
+    <a href='https://maps.app.goo.gl/CA97AANGebN1aCHX9'  target="_blank">1575 Garden of the Gods Rd, Suite 100</a>
+    <p></p>
+    <a href='https://maps.app.goo.gl/CA97AANGebN1aCHX9'  target="_blank">Colorado Springs, CO 80907</a>
   </footer>
 
   <script>
@@ -279,10 +324,80 @@
       document.getElementById('total').textContent = `$${total.toFixed(2)}`;
     }
 
+    // PayPal Modal Integration (added)
+    const paypalModal = document.getElementById('paypalModal');
+    const paypalCloseBtn = document.getElementById('paypalCloseBtn');
+    const paypalCancelBtn = document.getElementById('paypalCancelBtn');
+
+    function showPaypalModal() {
+      paypalModal.style.display = 'flex';
+      renderPaypalButton();
+    }
+    function closePaypalModal() {
+      paypalModal.style.display = 'none';
+      // Clear button container so it re-renders fresh next time
+      const c = document.getElementById('paypal-button-container');
+      if (c) c.innerHTML = '';
+    }
+
+    // Click handlers to close modal
+    paypalCloseBtn.addEventListener('click', closePaypalModal);
+    paypalCancelBtn.addEventListener('click', closePaypalModal);
+    paypalModal.addEventListener('click', (e) => {
+      if (e.target === paypalModal) closePaypalModal();
+    });
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && paypalModal.style.display === 'flex') closePaypalModal();
+    });
+
+    function renderPaypalButton() {
+      const totalText = document.getElementById('total').textContent.replace('$','');
+      const total = Math.max(0, parseFloat(totalText) || 0);
+
+      // Guard: if somehow zero, do nothing
+      if (!total) {
+        alert('Your cart total is $0.00');
+        closePaypalModal();
+        return;
+      }
+
+      // Reset container in case of reopen
+      const container = document.getElementById('paypal-button-container');
+      container.innerHTML = '';
+
+      // Render PayPal Buttons
+      paypal.Buttons({
+        style: { layout: 'vertical' },
+        createOrder: (data, actions) => {
+          return actions.order.create({
+            purchase_units: [{
+              amount: { value: total.toFixed(2) }
+            }]
+          });
+        },
+        onApprove: (data, actions) => {
+          return actions.order.capture().then((details) => {
+            alert(`Transaction completed by ${details?.payer?.name?.given_name || 'customer'}!`);
+            closePaypalModal();
+            // Clear cart after "successful" demo payment
+            for (let key in cart) delete cart[key];
+            renderCart();
+          });
+        },
+        onCancel: () => {
+          // Close modal on cancel
+          closePaypalModal();
+        },
+        onError: (err) => {
+          console.error('PayPal error:', err);
+          alert('There was a problem processing the payment. Please try again.');
+        }
+      }).render('#paypal-button-container');
+    }
+
+    // Replace prior checkout alert with PayPal modal
     document.getElementById('checkout').onclick = () => {
-      alert('Thank you for your order! CLASS DEMO ONLY.');
-      for (let key in cart) delete cart[key];
-      renderCart();
+      showPaypalModal();
     };
 
     // -------- Admin (client-side demo) --------
@@ -462,3 +577,4 @@
   </script>
 </body>
 </html>
+
