@@ -14,8 +14,32 @@
          }
     header { background: #ef4444; color: white; padding: 1rem; text-align: center; position: relative; }
     h1 { margin: 0; }
-    main { display: flex; gap: 2rem; padding: 1rem; max-width: 1100px; margin: auto; }
-    .menu { flex: 1; background: white; border-radius: 8px; padding: 1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.1); height: 362px}
+    main { display: flex; gap: 2rem; padding: 1rem; max-width: 1100px; margin: auto; align-items: flex-start; }
+    .menu { 
+      flex: 1; 
+      background: #ffffff; 
+      border-radius: 8px; 
+      padding: 1rem; 
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1); 
+      height: auto;
+    } 
+    .menu-photo { 
+      width: 120px; 
+      height: 120px; 
+      object-fit: cover; 
+      border-radius: 8px; 
+      margin-top: 0.5rem; 
+      display: block; 
+    }
+    #admin {
+      position: fixed;
+      top: 110px;
+      left: 20px;
+      width: 350px;
+      z-index: 1000;
+      max-height: calc(100vh - 140px);
+      overflow-y: auto;
+    }
     .cart { flex: 1; background: white; border-radius: 8px; padding: 1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
     .menu-item { display: flex; justify-content: space-between; align-items: center; padding: .5rem 0; border-bottom: 1px solid #ddd; }
     .menu-item:last-child { border-bottom: none; }
@@ -144,7 +168,12 @@
         const label = `${item.name}${star} — $${item.price.toFixed(2)}`;
         const div = document.createElement('div');
         div.className = 'menu-item';
-        div.innerHTML = `<span>${label}</span>`;
+        div.innerHTML = `
+          <div>
+            <span>${label}</span>
+            <img class="menu-photo" src="images/${item.id}.png" alt="${item.name}">
+          </div>
+        `;
         const btn = document.createElement('button');
         btn.textContent = 'Add';
         btn.onclick = () => addToCart(item);
